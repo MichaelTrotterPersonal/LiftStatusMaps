@@ -60,7 +60,6 @@ def lift_url(resort):
 
 def lift_map(resort):
     return {'perisher' : BytesIO(requests.get(r'https://www.perisher.com.au/images/trailmaps/2019/13362_PSR_FA2_WebsiteTrailMaps_May19_Perisher.jpg').content)}[resort]
-    #return {'perisher' : r'D:\Projects\Python Programs\LiftStatusMaps\PerisherMap.jpg'}[resort]
 
 def get_lifts(resort):
 
@@ -75,35 +74,36 @@ def get_lifts(resort):
         lift_names = [l.split("(")[0].strip().lower() for l in lift_names if l != "Opens"]
         return zip(lift_names,lift_statuses)
 
+def generate_map(resort):
+    lifts = get_lifts(resort)
 
-resort = 'perisher'
+    trailmap = resort + 'MapBW.jpg' 
 
-lifts = get_lifts(resort)
-
-
-trailmap = resort + 'MapBW.jpg' 
-
-if not os.path.isfile(trailmap):
-    im = Image.open(lift_map(resort))
-    im = im.convert('L') # convert image to black and white
-    im.save(resort + 'MapBW.jpg')
-else:
-    print('trailmap found in folder')
-
-
-im = Image.open(trailmap)
-
-im = im.convert('RGB')
-draw = ImageDraw.Draw(im)
-
-for lift in lifts:
-    if lift[1] == 'Open':
-        draw.line(coords[lift[0]], fill='green', width = 10)
-
-    elif lift[1] == 'Closed':
-        draw.line(coords[lift[0]], fill='red', width = 10)
-
+    if not os.path.isfile(trailmap):
+        im = Image.open(lift_map(resort))
+        im = im.convert('L') # convert image to black and white
+        im.save(resort + 'MapBW.jpg')
     else:
-        print('unknown: ',lift)
+        print('trailmap found in folder')
 
-im.show()
+
+    im = Image.open(trailmap)
+
+    im = im.convert('RGB')
+    draw = ImageDraw.Draw(im)
+
+    for lift in lifts:
+        if lift[1] == 'Open':
+            draw.line(coords[lift[0]], fill='green', width = 10)
+
+        elif lift[1] == 'Closed':
+            draw.line(coords[lift[0]], fill='red', width = 10)
+
+        else:
+            print('unknown: ',lift)
+
+    im.show()
+
+if __name__ == '__main__':
+
+    generate_map('perisher')
