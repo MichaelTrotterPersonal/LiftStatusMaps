@@ -20,7 +20,7 @@ coords = {"perisher quad express" : (1153,717,1129,1499),
 "quad express": (1130,1498,1153,717),
 "sturt t-bar": (1150,1500,1298,1183),
 "village 8 express chair" : (1281,1527,1379,1154),
-"mitchell t-bar" : (1137,1514,1450,1209),
+"mitchell t-bar" : (1338,1514,1450,1209),
 "tom thumb" : (1367,1514,1435,1475),
 "telemark t-bar" : (1794,1502,1453,1292),
 "pretty valley double chair" : (1785,1356,1161,862),
@@ -29,7 +29,7 @@ coords = {"perisher quad express" : (1153,717,1129,1499),
 "ski carpet no. 1" : (1328,1508,1341,1469),
 "ski carpet no. 2": (1351,1513,1374,1454),
 "ski carpet no. 3": (1420,1509,1440,1480),
-"ski carpet no. 4": (1420,1509,1440,1480), #I don't know where this is..?
+"ski carpet no. 4": (1387,1457,1419,1454), 
 "piper t-bar": (1827,1529,2118,1455),
 "link t-bar": (2713,1644,2434,1347),
 "burke t-bar": (2839,1629,2689,1227),
@@ -93,6 +93,7 @@ def generate_map(resort):
     draw = ImageDraw.Draw(im)
 
     for lift in lifts:
+        print(lift)
         if lift[1] == 'Open':
             draw.line(coords[lift[0]], fill='green', width = 10)
 
