@@ -93,7 +93,7 @@ def generate_map(resort):
     draw = ImageDraw.Draw(im)
 
     for lift in lifts:
-        print(lift)
+
         if lift[1] == 'Open':
             draw.line(coords[lift[0]], fill='green', width = 10)
 
