@@ -99,7 +99,13 @@ def generate_map(resort):
 
         elif lift[1] == 'Closed':
             draw.line(coords[lift[0]], fill='red', width = 10)
+            
+        elif lift[1] == 'On Demand':
+            draw.line(coords[lift[0]], fill='blue', width = 10)
 
+        elif lift[1] == 'On Hold':
+            draw.line(coords[lift[0]], fill='orange', width = 10)
+            
         else:
             print('unknown: ',lift)
 
