@@ -1,6 +1,6 @@
 import requests
 from lxml import html
-from PIL import Image, ImageDraw, ImageColor
+from PIL import Image, ImageDraw, ImageColor, ImageFont, ImageOps
 from io import BytesIO, StringIO
 import os
 import json
@@ -8,15 +8,16 @@ from flask import Flask, send_file
 __version__ = '1.0.0'
 app = Flask(__name__)
 
-def lift_url(resort):
-   return {'perisher' : r'https://www.perisher.com.au/reports-cams/reports/lift-report'}[resort]
-
-def lift_map(resort):
-    return {'perisher' : BytesIO(requests.get(r'https://www.perisher.com.au/images/trailmaps/2019/13362_PSR_FA2_WebsiteTrailMaps_May19_Perisher.jpg').content)}[resort]
+with open('lift_urls.json','r') as f:
+    lift_urls = json.load(f)
+    lift_status_urls = lift_urls["lift reports"]
 
 def get_lifts(resort):
 
-    url = lift_url(resort)
+    if not resort in lift_status_urls:
+        return None
+
+    url = lift_status_urls[resort]
 
     page = requests.get(url)
     tree = html.fromstring(page.content)
@@ -33,36 +34,47 @@ def serve_pil_image(pil_img):
     img_io.seek(0)
     return send_file(img_io, mimetype='image/jpeg')
 
-@app.route("/")
-def get_version():
-    return "COMP1710 WebApp Version "+__version__
-
-@app.route("/<resort>")
-def generate_map(resort):
-    resort = str(resort)
-
-    lifts = get_lifts(resort)
-    
+def get_img_coords(resort):
     with open('lift_image_coords.json','r') as f:
         coords = json.load(f)[resort]
 
     for lift in coords:
         coords[lift] = tuple(int(i) for i in coords[lift][1:-1].split(','))
 
-    trailmap = resort + 'MapBW.jpg' 
+    return coords
 
-    if not os.path.isfile(trailmap):
-        im = Image.open(lift_map(resort))
-        im = im.convert('L') # convert image to black and white
-        im.save(resort + 'MapBW.jpg')
-    else:
-        print('trailmap found in folder')
+def get_trail_map_img(resort):
+    trailmap = f'images/{resort}.jpg' 
+
+    return Image.open(trailmap)
 
     
-    im = Image.open(trailmap)
 
-    im = im.convert('RGB')
-    draw = ImageDraw.Draw(im)
+def stamp_not_implemented(trail_map_img):
+
+    trail_map_img = ImageOps.grayscale(trail_map_img)
+    trail_map_img = trail_map_img.convert('RGB')
+
+    draw = ImageDraw.Draw(trail_map_img)
+
+    msg = "SORRY, NOT YET IMPLEMENTED"
+    
+    
+    W, H = trail_map_img.size
+
+    font = ImageFont.truetype("arial.ttf", int(W/20))
+    w, h = draw.textsize(msg,font)
+
+    draw.text(((W-w)/2,(H-h)/2), msg, font=font,fill="red")
+    
+    return trail_map_img
+
+
+
+
+def apply_lift_statuses(trail_map_img,coords,lifts):
+
+    draw = ImageDraw.Draw(trail_map_img)
 
     for lift in lifts:
 
@@ -81,9 +93,33 @@ def generate_map(resort):
         else:
             print('unknown: ',lift)
     
-    return serve_pil_image(im)
+    return trail_map_img
+
+        
+@app.route("/")
+def get_version():
+    return "COMP1710 WebApp Version "+__version__
+
+@app.route("/<resort>")
+def generate_map(resort):
+
+    resort = str(resort)
+
+    lifts = get_lifts(resort)
+    trail_map_img = get_trail_map_img(resort)
+
+    if lifts == None:
+        return serve_pil_image(stamp_not_implemented(trail_map_img))
+    
+    else:
+        coords = get_img_coords(resort)
+
+        trail_map_img = apply_lift_statuses(trail_map_img,coords,lifts)
+
+        return serve_pil_image(trail_map_img)
 
 
 
 if __name__ == "__main__":
+
     app.run(host="127.0.0.1", port=8080, debug=True)
