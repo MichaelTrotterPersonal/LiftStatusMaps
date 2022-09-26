@@ -1,10 +1,10 @@
 import requests
 from lxml import html
-from PIL import Image, ImageDraw, ImageColor, ImageFont, ImageOps
-from io import BytesIO, StringIO
-import os
+from PIL import Image, ImageDraw, ImageFont, ImageOps,ImageEnhance
+from io import BytesIO
 import json
 from flask import Flask, send_file
+
 __version__ = '1.0.0'
 app = Flask(__name__)
 
@@ -44,35 +44,18 @@ def get_img_coords(resort):
     return coords
 
 def get_trail_map_img(resort):
+
     trailmap = f'images/{resort}.jpg' 
-
-    return Image.open(trailmap)
+    trailmap = Image.open(trailmap)
+    
+    return trailmap
 
     
-
-def stamp_not_implemented(trail_map_img):
-
-    trail_map_img = ImageOps.grayscale(trail_map_img)
-    trail_map_img = trail_map_img.convert('RGB')
-
-    draw = ImageDraw.Draw(trail_map_img)
-
-    msg = "SORRY, NOT YET IMPLEMENTED"
-    
-    
-    W, H = trail_map_img.size
-
-    font = ImageFont.truetype("arial.ttf", int(W/20))
-    w, h = draw.textsize(msg,font)
-
-    draw.text(((W-w)/2,(H-h)/2), msg, font=font,fill="red")
-    
-    return trail_map_img
-
-
-
 
 def apply_lift_statuses(trail_map_img,coords,lifts):
+
+    filter = ImageEnhance.Color(trail_map_img)
+    trail_map_img = filter.enhance(.3)
 
     draw = ImageDraw.Draw(trail_map_img)
 
@@ -104,22 +87,30 @@ def get_version():
 def generate_map(resort):
 
     resort = str(resort)
-
-    lifts = get_lifts(resort)
-    trail_map_img = get_trail_map_img(resort)
-
-    if lifts == None:
-        return serve_pil_image(stamp_not_implemented(trail_map_img))
     
-    else:
-        coords = get_img_coords(resort)
+    if resort in ['buller','hotham','falls','thredbo']:
+        trail_map_img = get_trail_map_img(resort)
+        
+        return serve_pil_image(trail_map_img)
 
+    elif resort in ['perisher']:
+
+        lifts = get_lifts(resort)
+        trail_map_img = get_trail_map_img(resort)
+        coords = get_img_coords(resort)
         trail_map_img = apply_lift_statuses(trail_map_img,coords,lifts)
 
         return serve_pil_image(trail_map_img)
+    
 
+    elif resort == 'offseason':
+        trail_map_img = get_trail_map_img("perisher_offseason")
+        
+        return serve_pil_image(trail_map_img)
+        
 
 
 if __name__ == "__main__":
-
     app.run(host="127.0.0.1", port=8080, debug=True)
+
+
